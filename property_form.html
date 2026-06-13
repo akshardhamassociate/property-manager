@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zameen & Property Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .page-header {
+    max-width: 720px;
+    margin: 0 auto 24px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .page-header p {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    border: 1px solid #e4e6ea;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .card:not(:last-of-type) { margin-bottom: 16px; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #888;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+  }
+  .required-star { color: #e53935; }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 9px 12px;
+    border: 1px solid #dde1e7;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #fafafa;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+    font-family: inherit;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #4a6cf7;
+    box-shadow: 0 0 0 3px rgba(74,108,247,0.1);
+    background: #fff;
+  }
+  .form-group textarea { height: 80px; resize: vertical; }
+
+  /* File Upload */
+  .upload-zone {
+    border: 2px dashed #d0d5e8;
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f7f8ff;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #4a6cf7;
+    background: #eef0ff;
+  }
+  .upload-zone svg { margin-bottom: 8px; }
+  .upload-zone p { font-size: 14px; color: #555; margin-bottom: 4px; }
+  .upload-zone span { font-size: 12px; color: #999; }
+  .upload-zone input { display: none; }
+
+  .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f4f6fb;
+    border-radius: 8px;
+    border: 1px solid #e4e6ea;
+  }
+  .file-icon { font-size: 20px; }
+  .file-name { font-size: 13px; color: #333; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { font-size: 11px; color: #999; }
+  .file-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .file-remove:hover { color: #e53935; }
+
+  /* Submit Button */
+  .submit-wrap { max-width: 720px; margin: 0 auto 32px; }
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    background: #4a6cf7;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .submit-btn:hover { background: #3a5ce6; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { background: #a0aec0; cursor: not-allowed; transform: none; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #toast.error { background: #c0392b; }
+  #toast.success { background: #27ae60; }
+
+  /* Config banner */
+  .config-banner {
+    max-width: 720px;
+    margin: 0 auto 16px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #7a5c00;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .config-banner b { font-weight: 600; }
+
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ⚠️ STEP 1: Apna Apps Script Web App URL yahan paste karein -->
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9OJUJ_2BSYrsVh8iqdYEP67y9qC6IDJLO50-cV5JMoKXn-FD3cGTi6CTMbWRGZizy/exec";
+  // Upar waali line mein apna URL paste karein
+  // Example: const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+</script>
+
+<div class="page-header">
+  <h1>🏠 Zameen &amp; Property Manager</h1>
+  <p>Property ki details aur documents yahan save karein — Google Sheets mein automatically store hoga</p>
+</div>
+
+<div class="config-banner" id="config-warn">
+  ⚠️ <span><b>Setup zaroori hai:</b> Pehle Apps Script deploy karein, phir is file mein <code>APPS_SCRIPT_URL</code> update karein. Neeche instructions hain.</span>
+</div>
+
+<!-- Section 1: Basic Info -->
+<div class="card">
+  <div class="section-title">📋 Basic Details</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Property ka Naam <span class="required-star">*</span></label>
+      <input type="text" id="propName" placeholder="jaise: Papa ki zameen, Plot A-12" />
+    </div>
+    <div class="form-group">
+      <label>Property Type</label>
+      <select id="propType">
+        <option value="">-- Select karein --</option>
+        <option>Zameen (Agricultural)</option>
+        <option>Plot (Residential)</option>
+        <option>Plot (Commercial)</option>
+        <option>Makaan</option>
+        <option>Dukaan / Shop</option>
+        <option>Farm / Khet</option>
+        <option>Other</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Area / Rukba</label>
+      <input type="text" id="propArea" placeholder="jaise: 2 Bigha, 500 sqft" />
+    </div>
+    <div class="form-group">
+      <label>Khasra / Khata / Plot No.</label>
+      <input type="text" id="propKhasra" placeholder="jaise: Khasra 145/2" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Mauza / Village / Mohalla</label>
+      <input type="text" id="propVillage" placeholder="jaise: Village Rampur" />
+    </div>
+    <div class="form-group">
+      <label>Tehsil / Taluka</label>
+      <input type="text" id="propTehsil" placeholder="jaise: Kota" />
+    </div>
+  </div>
+  <div class="form-row full">
+    <div class="form-group">
+      <label>Pura Pata (Full Address)</label>
+      <input type="text" id="propAddress" placeholder="Plot no., colony, city..." />
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Location & Ownership -->
+<div class="card">
+  <div class="section-title">📍 Location &amp; Ownership</div>
+  <div class="form-row full">
+    <div class="form-group">
+      <label>Google Maps / Location Link</label>
+      <input type="url" id="propLocation" placeholder="https://maps.google.com/... ya goo.gl/maps/..." />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Maalik ka Naam (Owner)</label>
+      <input type="text" id="propOwner" placeholder="Property maalik ka naam" />
+    </div>
+    <div class="form-group">
+      <label>Date (Kab mili / kab li)</label>
+      <input type="date" id="propDate" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Contact Number</label>
+      <input type="tel" id="propContact" placeholder="Owner ya party ka number" />
+    </div>
+    <div class="form-group">
+      <label>Kimat / Valuation</label>
+      <input type="text" id="propValue" placeholder="jaise: 15 Lakh, 2 Cr" />
+    </div>
+  </div>
+  <div class="form-row full">
+    <div class="form-group">
+      <label>Notes / Zaroori Baat</label>
+      <textarea id="propNotes" placeholder="Dispute info, boundary details, koi bhi zaroori cheez..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Documents -->
+<div class="card">
+  <div class="section-title">📎 Documents (Nakal, Naksha, Sale Deed etc.)</div>
+  <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4a6cf7" stroke-width="1.5">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <p>Click karein ya file yahan drag karein</p>
+    <span>Images (JPG, PNG, WEBP) aur PDFs — max 5MB per file</span>
+    <input type="file" id="fileInput" multiple accept="image/*,.pdf" onchange="handleFiles(this.files)" />
+  </div>
+  <div class="file-list" id="fileList"></div>
+</div>
+
+<!-- Submit -->
+<div class="submit-wrap">
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+    💾 Record Save Karein (Google Sheets mein)
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── File Handling ───────────────────────────────────────────
+let attachedFiles = [];
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (f.size > 5 * 1024 * 1024) { showToast('❌ ' + f.name + ' — 5MB se badi file nahi chalegi', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      attachedFiles.push({ name: f.name, type: f.type, size: f.size, base64: e.target.result.split(',')[1] });
+      renderFiles();
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('fileInput').value = '';
+}
+
+function renderFiles() {
+  const el = document.getElementById('fileList');
+  el.innerHTML = attachedFiles.map((f, i) => `
+    <div class="file-item">
+      <span class="file-icon">${f.type.includes('pdf') ? '📄' : '🖼️'}</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${(f.size / 1024).toFixed(0)} KB</span>
+      <button class="file-remove" onclick="removeFile(${i})" title="Hataao">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFile(i) { attachedFiles.splice(i, 1); renderFiles(); }
+
+// ─── Toast ────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ─── Config check ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE') {
+    document.getElementById('config-warn').style.display = 'none';
+  }
+});
+
+// ─── Submit ───────────────────────────────────────────────────
+async function submitForm() {
+  const name = document.getElementById('propName').value.trim();
+  if (!name) { showToast('❌ Property ka naam zaroori hai', 'error'); return; }
+
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    showToast('⚠️ Pehle APPS_SCRIPT_URL set karein', 'error'); return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Save ho raha hai...';
+
+  const payload = {
+    propName:    name,
+    propType:    document.getElementById('propType').value,
+    propArea:    document.getElementById('propArea').value.trim(),
+    propKhasra:  document.getElementById('propKhasra').value.trim(),
+    propVillage: document.getElementById('propVillage').value.trim(),
+    propTehsil:  document.getElementById('propTehsil').value.trim(),
+    propAddress: document.getElementById('propAddress').value.trim(),
+    propLocation:document.getElementById('propLocation').value.trim(),
+    propOwner:   document.getElementById('propOwner').value.trim(),
+    propDate:    document.getElementById('propDate').value,
+    propContact: document.getElementById('propContact').value.trim(),
+    propValue:   document.getElementById('propValue').value.trim(),
+    propNotes:   document.getElementById('propNotes').value.trim(),
+    files:       attachedFiles   // base64 files array
+  };
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.status === 'ok') {
+      showToast('✅ Record save ho gaya! Sheet mein dekh sakte hain.', 'success');
+      resetForm();
+    } else {
+      showToast('❌ Error: ' + (json.message || 'Kuch problem aai'), 'error');
+    }
+  } catch (err) {
+    showToast('❌ Network error — Apps Script URL check karein', 'error');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Record Save Karein (Google Sheets mein)';
+  }
+}
+
+function resetForm() {
+  ['propName','propArea','propKhasra','propVillage','propTehsil','propAddress',
+   'propLocation','propOwner','propDate','propContact','propValue','propNotes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('propType').selectedIndex = 0;
+  attachedFiles = [];
+  renderFiles();
+}
+</script>
+
+</body>
+</html>
